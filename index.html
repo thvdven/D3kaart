@@ -1,0 +1,104 @@
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+  <html lang="en">
+  <head>
+    <title>D3 map Den Bosch</title>
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.v2.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+     <script src="js/tipsy.js"></script>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+
+    <div id="header">
+      <h2>Oppervlakte (in hectare) per buurt in 's-Hertogenbosch</h2>
+    </div>
+    <div id="wrapper">
+    <div class="inner">
+        <a href="?aantal=50"><li id="50"> < 50</li></a>
+        <a href="?aantal=100"><li id="100"> < 100</li></a>
+        <a href="?aantal=250"><li id="250"> < 250</li></a>
+        <a href="?aantal=500"><li id="500"> < 500</li></a>
+        <a href="?aantal=800"><li id="800"> < 800</li></a>     
+      </div>
+    <div id="vis"></div>
+    </div>
+
+    <script type="text/javascript">
+      // variabele formaat container
+      var w = 900;
+      var h = 600;
+
+
+      // uitlijnen om denbosch in beeld te hebben
+      var proj = d3.geo.mercator().scale(853500).translate([-12150,144000]);
+      var path = d3.geo.path().projection(proj);
+
+
+      // container maken
+      var map = d3.select("#vis").append("svg:svg")
+      .attr("width", w)
+      .attr("height", h)
+
+      // svg group toevoegen aan container
+      var denbosch = map.append("svg:g").attr("id", "denbosch");
+
+      var i = 0;
+      var p = 0;
+      d3.json("denbosch.json", function (json) {
+
+        denbosch.selectAll("path")
+        .data(json.features)
+        .enter().append("svg:path")
+        .attr("id" ,  function(arr) {
+          arr = "id" + i;
+          i++;
+          return arr;
+        }) 
+        .attr("d", path)
+        .attr("original-title", function(title){
+            title = json.features[p].properties.OPP_LAND;
+            naam = json.features[p].properties.BU_NAAM;
+             p++;
+            return naam + "<br>" + title + " hectare";           
+            });
+
+         // console.log(json.features[6].properties.P_GEHUWD);
+         console.log(json.features.length);
+
+        function getUrlVars() {
+          var vars = {};
+          var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+            vars[key] = value;
+          });
+          return vars;
+        }
+        var aantal = getUrlVars()["aantal"];
+
+        if (aantal == undefined) {
+          aantal = "100";
+        }
+
+        $("#"+aantal).addClass("current");
+
+        for (i = 0 ; i < json.features.length ; i++ ) {
+          $("path#id" + i).tipsy({gravity: 's', fade: 'true'})
+        }
+
+
+        var getal = parseInt(aantal);
+        for (i=0 ; i < json.features.length ; i++){
+          if(json.features[i].properties.OPP_LAND < getal) {
+            $("path#id" + i).css("fill" , "#6DBCDB");
+          }
+          else {
+            $("path#id" + i).css("fill" , "#FFF");
+          }
+        }
+      });
+
+
+
+
+  </script>
+</body>
+</html>
